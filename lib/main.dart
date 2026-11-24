@@ -9,49 +9,41 @@ class FursaApp extends StatelessWidget {
   const FursaApp({super.key});
 
   static const gold = Color(0xFFD4AF37);
-  static const black = Color(0xFF080808);
-  static const surface = Color(0xFF191919);
+  static const black = Color(0xFF101010);
+  static const panel = Color(0xFF1C1C1C);
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'فُرصة',
       debugShowCheckedModeBanner: false,
+      title: 'فُرصة',
       theme: ThemeData(
         brightness: Brightness.dark,
         scaffoldBackgroundColor: black,
+        primaryColor: gold,
         colorScheme: const ColorScheme.dark(
           primary: gold,
           secondary: gold,
-          surface: surface,
+          surface: panel,
         ),
         appBarTheme: const AppBarTheme(
           backgroundColor: black,
           foregroundColor: gold,
+          centerTitle: true,
           elevation: 0,
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: surface,
-          labelStyle: const TextStyle(color: gold),
-          hintStyle: const TextStyle(color: Colors.white54),
+          fillColor: panel,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: Colors.white12),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: gold),
           ),
         ),
       ),
       home: const Directionality(
         textDirection: TextDirection.rtl,
-        child: MainPage(),
+        child: MainScreen(),
       ),
     );
   }
@@ -60,656 +52,362 @@ class FursaApp extends StatelessWidget {
 class Job {
   final String title;
   final String company;
-  final String location;
+  final String city;
   final String salary;
-  final String type;
+  final IconData icon;
 
   const Job({
     required this.title,
     required this.company,
-    required this.location,
+    required this.city,
     required this.salary,
-    required this.type,
+    required this.icon,
   });
 }
 
-const governorates = [
-  'بغداد',
-  'البصرة',
-  'نينوى',
-  'أربيل',
-  'النجف',
-  'كربلاء',
-  'السليمانية',
-  'دهوك',
-  'الأنبار',
-  'ديالى',
-  'كركوك',
-  'صلاح الدين',
-  'بابل',
-  'واسط',
-  'ميسان',
-  'ذي قار',
-  'المثنى',
-  'القادسية',
+const jobs = [
+  Job(
+    title: 'موظف مبيعات',
+    company: 'شركة النخبة',
+    city: 'بغداد',
+    salary: '600,000 د.ع',
+    icon: Icons.storefront,
+  ),
+  Job(
+    title: 'سائق',
+    company: 'شركة التوصيل',
+    city: 'البصرة',
+    salary: '750,000 د.ع',
+    icon: Icons.local_shipping,
+  ),
+  Job(
+    title: 'محاسب',
+    company: 'مجموعة الأعمال',
+    city: 'أربيل',
+    salary: '900,000 د.ع',
+    icon: Icons.calculate,
+  ),
+  Job(
+    title: 'عامل مطعم',
+    company: 'مطعم الذوق',
+    city: 'النجف',
+    salary: '500,000 د.ع',
+    icon: Icons.restaurant,
+  ),
 ];
 
-class MainPage extends StatefulWidget {
-  const MainPage({super.key});
+class MainScreen extends StatefulWidget {
+  const MainScreen({super.key});
 
   @override
-  State<MainPage> createState() => _MainPageState();
+  State<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainPageState extends State<MainPage> {
-  int tab = 0;
-  String city = 'بغداد';
-  String search = '';
+class _MainScreenState extends State<MainScreen> {
+  int selectedIndex = 0;
+  String searchText = '';
 
-  final List<Job> jobs = [
-    const Job(
-      title: 'موظف مبيعات',
-      company: 'شركة تجارية',
-      location: 'بغداد',
-      salary: 'يحدد عند المقابلة',
-      type: 'دوام كامل',
-    ),
-    const Job(
-      title: 'سائق توصيل',
-      company: 'شركة توصيل',
-      location: 'البصرة',
-      salary: 'راتب شهري',
-      type: 'دوام كامل',
-    ),
-    const Job(
-      title: 'مصمم جرافيك',
-      company: 'مكتب إعلاني',
-      location: 'أربيل',
-      salary: 'حسب الخبرة',
-      type: 'دوام جزئي',
-    ),
+  final pages = const [
+    HomePage(),
+    JobsPage(),
+    PublishPage(),
+    SavedPage(),
+    ProfilePage(),
   ];
-
-  final List<Job> saved = [];
-
-  void message(String text) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(text),
-        backgroundColor: FursaApp.surface,
-      ),
-    );
-  }
-
-  void toggleSave(Job job) {
-    setState(() {
-      if (saved.contains(job)) {
-        saved.remove(job);
-        message('حُذفت الوظيفة من المحفوظات');
-      } else {
-        saved.add(job);
-        message('تم حفظ الوظيفة');
-      }
-    });
-  }
-
-  void addJob(Job job) {
-    setState(() {
-      jobs.insert(0, job);
-      tab = 0;
-    });
-    message('تمت إضافة الوظيفة محلياً');
-  }
 
   @override
   Widget build(BuildContext context) {
-    final pages = [
-      homePage(),
-      searchPage(),
-      AddJobPage(onPublish: addJob),
-      savedPage(),
-      accountPage(),
-    ];
-
     return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: const FursaLogo(),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_none),
-            onPressed: () => message('الإشعارات قريباً'),
-          ),
-        ],
+      body: SafeArea(
+        child: IndexedStack(
+          index: selectedIndex,
+          children: pages,
+        ),
       ),
-      body: IndexedStack(
-        index: tab,
-        children: pages,
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: tab,
-        onTap: (value) => setState(() => tab = value),
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: const Color(0xFF111111),
-        selectedItemColor: FursaApp.gold,
-        unselectedItemColor: Colors.white54,
-        selectedFontSize: 11,
-        unselectedFontSize: 10,
-        items: const [
-          BottomNavigationBarItem(
+      bottomNavigationBar: NavigationBar(
+        backgroundColor: const Color(0xFF191919),
+        indicatorColor: FursaApp.gold.withValues(alpha: 0.18),
+        selectedIndex: selectedIndex,
+        onDestinationSelected: (index) {
+          setState(() => selectedIndex = index);
+        },
+        destinations: const [
+          NavigationDestination(
             icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home, color: FursaApp.gold),
             label: 'الرئيسية',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: 'البحث',
+          NavigationDestination(
+            icon: Icon(Icons.work_outline),
+            selectedIcon: Icon(Icons.work, color: FursaApp.gold),
+            label: 'الوظائف',
           ),
-          BottomNavigationBarItem(
+          NavigationDestination(
             icon: Icon(Icons.add_circle_outline),
+            selectedIcon: Icon(Icons.add_circle, color: FursaApp.gold),
             label: 'أضف وظيفة',
           ),
-          BottomNavigationBarItem(
+          NavigationDestination(
             icon: Icon(Icons.bookmark_border),
+            selectedIcon: Icon(Icons.bookmark, color: FursaApp.gold),
             label: 'المحفوظات',
           ),
-          BottomNavigationBarItem(
+          NavigationDestination(
             icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person, color: FursaApp.gold),
             label: 'حسابي',
           ),
         ],
       ),
     );
   }
+}
 
-  Widget homePage() {
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       children: [
-        const WelcomeCard(),
-        const SizedBox(height: 18),
-        locationSelector(),
-        const SizedBox(height: 22),
-        const SectionTitle('ماذا تريد أن تفعل؟'),
         const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: ActionCard(
-                icon: Icons.work_outline,
-                title: 'أبحث عن عمل',
-                subtitle: 'اكتشف فرص العمل',
-                onTap: () => setState(() => tab = 1),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ActionCard(
-                icon: Icons.business_center_outlined,
-                title: 'أبحث عن موظف',
-                subtitle: 'اعثر على الكفاءات',
-                onTap: () => setState(() => tab = 2),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
-        const SectionTitle('أحدث الوظائف'),
-        const SizedBox(height: 12),
-        ...jobs.map((job) => JobCard(
-              job: job,
-              isSaved: saved.contains(job),
-              onSave: () => toggleSave(job),
-              onApply: () => message(
-                'اخترت التقديم على: ${job.title}',
-              ),
-            )),
-        const SizedBox(height: 20),
-        const SectionTitle('عن منصة فُرصة'),
-        const Text(
-          'منصة عراقية تجمع أصحاب العمل والباحثين عن فرص العمل في مكان واحد.',
-          style: TextStyle(
-            color: Colors.white70,
-            height: 1.8,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget locationSelector() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: FursaApp.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: FursaApp.gold.withOpacity(0.4),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
+        Center(
+          child: Column(
             children: [
-              Icon(Icons.location_on, color: FursaApp.gold),
-              SizedBox(width: 8),
-              Text(
-                'اختر محافظتك',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+              Container(
+                width: 76,
+                height: 76,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: FursaApp.gold, width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: FursaApp.gold.withValues(alpha: 0.2),
+                      blurRadius: 20,
+                    ),
+                  ],
                 ),
+                child: const Icon(
+                  Icons.workspace_premium,
+                  color: FursaApp.gold,
+                  size: 42,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'فُرصة',
+                style: TextStyle(
+                  color: FursaApp.gold,
+                  fontSize: 34,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 2,
+                ),
+              ),
+              const Text(
+                'طريقك إلى العمل يبدأ من هنا',
+                style: TextStyle(color: Colors.white70),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
-            value: city,
-            dropdownColor: FursaApp.surface,
-            decoration: const InputDecoration(
-              prefixIcon: Icon(
-                Icons.map_outlined,
-                color: FursaApp.gold,
+        ),
+        const SizedBox(height: 25),
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: const LinearGradient(
+              colors: [Color(0xFF292318), Color(0xFF171717)],
+            ),
+            border: Border.all(color: FursaApp.gold.withValues(alpha: 0.5)),
+          ),
+          child: const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'مستقبلك المهني يبدأ الآن',
+                style: TextStyle(
+                  color: FursaApp.gold,
+                  fontSize: 21,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'اكتشف الوظائف المناسبة لك أو اعثر على الموظف المناسب لعملك.',
+                style: TextStyle(color: Colors.white70, height: 1.6),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 25),
+        const SectionTitle(title: 'استكشف فُرصة'),
+        const SizedBox(height: 12),
+        const Row(
+          children: [
+            Expanded(
+              child: FeatureCard(
+                icon: Icons.search,
+                title: 'ابحث عن عمل',
+                subtitle: 'اكتشف الوظائف',
               ),
             ),
-            items: governorates.map((g) {
-              return DropdownMenuItem(
-                value: g,
-                child: Text(g),
-              );
-            }).toList(),
-            onChanged: (value) {
-              if (value != null) {
-                setState(() => city = value);
-              }
-            },
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'اختر محافظتك لعرض الوظائف المتاحة.',
-            style: TextStyle(
-              color: Colors.white54,
-              fontSize: 12,
+            SizedBox(width: 12),
+            Expanded(
+              child: FeatureCard(
+                icon: Icons.business_center,
+                title: 'وظّف الآن',
+                subtitle: 'اعثر على عامل',
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
+        const SizedBox(height: 25),
+        const SectionTitle(title: 'أحدث الوظائف'),
+        const SizedBox(height: 10),
+        ...jobs.take(3).map((job) => JobCard(job: job)),
+      ],
     );
   }
+}
 
-  Widget searchPage() {
-    final results = jobs.where((job) {
-      return job.location == city &&
-          (job.title.contains(search) ||
-              job.company.contains(search));
+class JobsPage extends StatefulWidget {
+  const JobsPage({super.key});
+
+  @override
+  State<JobsPage> createState() => _JobsPageState();
+}
+
+class _JobsPageState extends State<JobsPage> {
+  String query = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final filtered = jobs.where((job) {
+      return job.title.contains(query) ||
+          job.city.contains(query) ||
+          job.company.contains(query);
     }).toList();
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       children: [
-        const SectionTitle('البحث عن الوظائف'),
-        const SizedBox(height: 14),
-        TextField(
-          decoration: const InputDecoration(
-            hintText: 'اكتب اسم الوظيفة أو المهنة',
-            prefixIcon: Icon(
-              Icons.search,
-              color: FursaApp.gold,
-            ),
-          ),
-          onChanged: (value) {
-            setState(() => search = value);
-          },
-        ),
-        const SizedBox(height: 14),
-        locationSelector(),
-        const SizedBox(height: 20),
-        const SectionTitle('نتائج البحث'),
-        const SizedBox(height: 12),
-        if (results.isEmpty)
-          const Padding(
-            padding: EdgeInsets.all(24),
-            child: Text(
-              'لا توجد وظائف مطابقة حالياً.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white54),
-            ),
-          ),
-        ...results.map((job) => JobCard(
-              job: job,
-              isSaved: saved.contains(job),
-              onSave: () => toggleSave(job),
-              onApply: () => message(
-                'اخترت التقديم على الوظيفة',
-              ),
-            )),
-      ],
-    );
-  }
-
-  Widget savedPage() {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        const SectionTitle('الوظائف المحفوظة'),
-        const SizedBox(height: 14),
-        if (saved.isEmpty)
-          const Padding(
-            padding: EdgeInsets.all(30),
-            child: Text(
-              'لا توجد وظائف محفوظة حالياً.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white54),
-            ),
-          ),
-        ...saved.map((job) => JobCard(
-              job: job,
-              isSaved: true,
-              onSave: () => toggleSave(job),
-              onApply: () => message(
-                'اخترت التقديم على الوظيفة',
-              ),
-            )),
-      ],
-    );
-  }
-
-  Widget accountPage() {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        const WelcomeCard(),
-        const SizedBox(height: 20),
-        const SectionTitle('حسابك في فُرصة'),
-        const SizedBox(height: 12),
-        AccountOption(
-          icon: Icons.person_outline,
-          title: 'الملف الشخصي',
-          onTap: () => message('الملف الشخصي قريباً'),
-        ),
-        AccountOption(
-          icon: Icons.work_outline,
-          title: 'طلباتي وتقديماتي',
-          onTap: () => message('طلبات التقديم قريباً'),
-        ),
-        AccountOption(
-          icon: Icons.chat_bubble_outline,
-          title: 'المراسلات',
-          onTap: () => message(
-            'المراسلة متاحة بعد التقديم أو قبول الطلب',
-          ),
-        ),
-        AccountOption(
-          icon: Icons.verified_user_outlined,
-          title: 'توثيق الحساب',
-          onTap: () => message('توثيق الحساب قريباً'),
-        ),
-        AccountOption(
-          icon: Icons.star_border,
-          title: 'التقييمات',
-          onTap: () => message('التقييمات قريباً'),
-        ),
-        AccountOption(
-          icon: Icons.settings_outlined,
-          title: 'الإعدادات',
-          onTap: () => message('الإعدادات قريباً'),
-        ),
-        AccountOption(
-          icon: Icons.help_outline,
-          title: 'المساعدة والدعم',
-          onTap: () => message('الدعم الفني قريباً'),
-        ),
-      ],
-    );
-  }
-}
-
-class AddJobPage extends StatefulWidget {
-  final ValueChanged<Job> onPublish;
-
-  const AddJobPage({
-    super.key,
-    required this.onPublish,
-  });
-
-  @override
-  State<AddJobPage> createState() => _AddJobPageState();
-}
-
-class _AddJobPageState extends State<AddJobPage> {
-  final titleController = TextEditingController();
-  final companyController = TextEditingController();
-  final salaryController = TextEditingController();
-
-  String location = 'بغداد';
-  String type = 'دوام كامل';
-
-  @override
-  void dispose() {
-    titleController.dispose();
-    companyController.dispose();
-    salaryController.dispose();
-    super.dispose();
-  }
-
-  void publish() {
-    if (titleController.text.trim().isEmpty ||
-        companyController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('يرجى إدخال عنوان الوظيفة واسم جهة العمل'),
-        ),
-      );
-      return;
-    }
-
-    widget.onPublish(
-      Job(
-        title: titleController.text.trim(),
-        company: companyController.text.trim(),
-        location: location,
-        salary: salaryController.text.trim().isEmpty
-            ? 'يحدد عند المقابلة'
-            : salaryController.text.trim(),
-        type: type,
-      ),
-    );
-
-    titleController.clear();
-    companyController.clear();
-    salaryController.clear();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        const SectionTitle('إضافة إعلان وظيفة'),
+        const PageTitle(title: 'الوظائف المتاحة'),
         const SizedBox(height: 18),
         TextField(
-          controller: titleController,
+          onChanged: (value) => setState(() => query = value),
           decoration: const InputDecoration(
-            labelText: 'عنوان الوظيفة',
+            hintText: 'ابحث عن وظيفة أو محافظة',
+            prefixIcon: Icon(Icons.search, color: FursaApp.gold),
           ),
         ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: companyController,
-          decoration: const InputDecoration(
-            labelText: 'اسم الشركة أو صاحب العمل',
+        const SizedBox(height: 18),
+        ...filtered.map((job) => JobCard(job: job)),
+        if (filtered.isEmpty)
+          const Padding(
+            padding: EdgeInsets.all(30),
+            child: Center(child: Text('لا توجد نتائج مطابقة')),
           ),
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: salaryController,
-          decoration: const InputDecoration(
-            labelText: 'الراتب أو الأجر',
-          ),
-        ),
-        const SizedBox(height: 12),
-        DropdownButtonFormField<String>(
-          value: location,
-          dropdownColor: FursaApp.surface,
-          decoration: const InputDecoration(
-            labelText: 'المحافظة',
-          ),
-          items: governorates.map((g) {
-            return DropdownMenuItem(
-              value: g,
-              child: Text(g),
-            );
-          }).toList(),
-          onChanged: (value) {
-            if (value != null) {
-              setState(() => location = value);
-            }
-          },
-        ),
-        const SizedBox(height: 12),
-        DropdownButtonFormField<String>(
-          value: type,
-          dropdownColor: FursaApp.surface,
-          decoration: const InputDecoration(
-            labelText: 'نوع العمل',
-          ),
-          items: const [
-            DropdownMenuItem(
-              value: 'دوام كامل',
-              child: Text('دوام كامل'),
-            ),
-            DropdownMenuItem(
-              value: 'دوام جزئي',
-              child: Text('دوام جزئي'),
-            ),
-            DropdownMenuItem(
-              value: 'عمل عن بعد',
-              child: Text('عمل عن بعد'),
-            ),
-          ],
-          onChanged: (value) {
-            if (value != null) {
-              setState(() => type = value);
-            }
-          },
+      ],
+    );
+  }
+}
+
+class PublishPage extends StatelessWidget {
+  const PublishPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(18),
+      children: [
+        const PageTitle(title: 'نشر وظيفة'),
+        const SizedBox(height: 10),
+        const Text(
+          'أضف تفاصيل الوظيفة حتى يتمكن الباحثون عن عمل من العثور عليها.',
+          style: TextStyle(color: Colors.white70),
         ),
         const SizedBox(height: 22),
+        const InputField(label: 'عنوان الوظيفة'),
+        const InputField(label: 'اسم الشركة'),
+        const InputField(label: 'المحافظة'),
+        const InputField(label: 'الراتب المتوقع'),
+        const InputField(label: 'تفاصيل الوظيفة', maxLines: 4),
+        const SizedBox(height: 15),
         GoldButton(
           text: 'نشر الوظيفة',
-          onPressed: publish,
-        ),
-        const SizedBox(height: 14),
-        const Text(
-          'النشر الحالي تجريبي ومحلي. ربط قاعدة البيانات مطلوب حتى تظهر الوظيفة لجميع المستخدمين.',
-          style: TextStyle(
-            color: Colors.white54,
-            fontSize: 12,
-          ),
+          onPressed: () {
+            showMessage(context, 'هذه الواجهة تجريبية حالياً');
+          },
         ),
       ],
     );
   }
 }
 
-class FursaLogo extends StatelessWidget {
-  const FursaLogo({super.key});
+class SavedPage extends StatelessWidget {
+  const SavedPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 20,
-        vertical: 7,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.black,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: FursaApp.gold.withOpacity(0.6),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: FursaApp.gold.withOpacity(0.15),
-            blurRadius: 12,
-          ),
-        ],
-      ),
-      child: const Text(
-        'فُرصة',
-        style: TextStyle(
-          color: FursaApp.gold,
-          fontSize: 28,
-          fontWeight: FontWeight.w900,
-          shadows: [
-            Shadow(
-              color: Color(0xFF8B6914),
-              offset: Offset(2, 3),
-              blurRadius: 3,
-            ),
-            Shadow(
-              color: Color(0xFFFFE9A0),
-              offset: Offset(-1, -1),
-              blurRadius: 2,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class WelcomeCard extends StatelessWidget {
-  const WelcomeCard({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
-        gradient: const LinearGradient(
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
-          colors: [
-            Color(0xFF30240A),
-            Color(0xFF151515),
-            Color(0xFF080808),
-          ],
-        ),
-        border: Border.all(
-          color: FursaApp.gold.withOpacity(0.5),
-        ),
-      ),
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          Icon(Icons.bookmark_border, color: FursaApp.gold, size: 65),
+          SizedBox(height: 12),
           Text(
-            'أهلاً بك في فُرصة',
+            'المحفوظات',
             style: TextStyle(
               color: FursaApp.gold,
               fontSize: 24,
               fontWeight: FontWeight.bold,
             ),
           ),
-          SizedBox(height: 10),
-          Text(
-            'منصتك للبحث عن العمل والعثور على الكفاءات في العراق.',
-            style: TextStyle(
-              color: Colors.white70,
-              height: 1.7,
-            ),
+          SizedBox(height: 8),
+          Text('ستظهر الوظائف التي تحفظها هنا'),
+        ],
+      ),
+    );
+  }
+}
+
+class ProfilePage extends StatelessWidget {
+  const ProfilePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(18),
+      children: [
+        const PageTitle(title: 'حسابي'),
+        const SizedBox(height: 25),
+        const Center(
+          child: CircleAvatar(
+            radius: 48,
+            backgroundColor: Color(0xFF292318),
+            child: Icon(Icons.person, color: FursaApp.gold, size: 55),
           ),
-          SizedBox(height: 16),
-          Text(
-            'فرصتك تبدأ هنا',
+        ),
+        const SizedBox(height: 14),
+        const Center(
+          child: Text(
+            'مرحباً بك في فُرصة',
             style: TextStyle(
               color: FursaApp.gold,
-              fontSize: 17,
+              fontSize: 21,
               fontWeight: FontWeight.bold,
             ),
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 25),
+        const AccountOption(icon: Icons.person_outline, title: 'بيانات الحساب'),
+        const AccountOption(icon: Icons.work_outline, title: 'طلباتي'),
+        const AccountOption(icon: Icons.chat_bubble_outline, title: 'المراسلات'),
+        const AccountOption(icon: Icons.verified_user_outlined, title: 'توثيق الحساب'),
+        const AccountOption(icon: Icons.notifications_outlined, title: 'الإشعارات'),
+        const AccountOption(icon: Icons.settings_outlined, title: 'الإعدادات'),
+      ],
     );
   }
 }
@@ -717,7 +415,7 @@ class WelcomeCard extends StatelessWidget {
 class SectionTitle extends StatelessWidget {
   final String title;
 
-  const SectionTitle(this.title, {super.key});
+  const SectionTitle({super.key, required this.title});
 
   @override
   Widget build(BuildContext context) {
@@ -725,47 +423,232 @@ class SectionTitle extends StatelessWidget {
       title,
       style: const TextStyle(
         color: FursaApp.gold,
-        fontSize: 18,
+        fontSize: 20,
         fontWeight: FontWeight.bold,
       ),
     );
   }
 }
 
-class ActionCard extends StatelessWidget {
+class PageTitle extends StatelessWidget {
+  final String title;
+
+  const PageTitle({super.key, required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      title,
+      style: const TextStyle(
+        color: FursaApp.gold,
+        fontSize: 25,
+        fontWeight: FontWeight.bold,
+      ),
+    );
+  }
+}
+
+class FeatureCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
-  final VoidCallback onTap;
 
-  const ActionCard({
+  const FeatureCard({
     super.key,
     required this.icon,
     required this.title,
     required this.subtitle,
-    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: FursaApp.surface,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: FursaApp.gold.withOpacity(0.3),
+    return Container(
+      padding: const EdgeInsets.all(17),
+      decoration: BoxDecoration(
+        color: FursaApp.panel,
+        borderRadius: BorderRadius.circular(17),
+        border: Border.all(color: FursaApp.gold.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: FursaApp.gold, size: 35),
+          const SizedBox(height: 10),
+          Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            subtitle,
+            style: const TextStyle(color: Colors.white60, fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class JobCard extends StatelessWidget {
+  final Job job;
+
+  const JobCard({super.key, required this.job});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: FursaApp.panel,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: FursaApp.gold.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(13),
+            ),
+            child: Icon(job.icon, color: FursaApp.gold, size: 27),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  job.title,
+                  style: const TextStyle(
+                    color: FursaApp.gold,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  job.company,
+                  style: const TextStyle(color: Colors.white70),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  '${job.city} • ${job.salary}',
+                  style: const TextStyle(color: Colors.white54, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            onPressed: () {
+              showMessage(context, 'تفاصيل الوظيفة قريباً');
+            },
+            icon: const Icon(Icons.arrow_back_ios_new, color: FursaApp.gold),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class InputField extends StatelessWidget {
+  final String label;
+  final int maxLines;
+
+  const InputField({
+    super.key,
+    required this.label,
+    this.maxLines = 1,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: TextField(
+        maxLines: maxLines,
+        decoration: InputDecoration(labelText: label),
+      ),
+    );
+  }
+}
+
+class AccountOption extends StatelessWidget {
+  final IconData icon;
+  final String title;
+
+  const AccountOption({
+    super.key,
+    required this.icon,
+    required this.title,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: FursaApp.panel,
+        borderRadius: BorderRadius.circular(13),
+      ),
+      child: ListTile(
+        leading: Icon(icon, color: FursaApp.gold),
+        title: Text(title),
+        trailing: const Icon(
+          Icons.arrow_back_ios,
+          color: FursaApp.gold,
+          size: 16,
+        ),
+        onTap: () {
+          showMessage(context, 'هذه الخاصية قيد التطوير');
+        },
+      ),
+    );
+  }
+}
+
+class GoldButton extends StatelessWidget {
+  final String text;
+  final VoidCallback onPressed;
+
+  const GoldButton({
+    super.key,
+    required this.text,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: FursaApp.gold,
+          foregroundColor: Colors.black,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
           ),
         ),
-        child: Column(
-          children: [
-            Icon(icon, color: FursaApp.gold, size: 32),
-            const SizedBox(height: 10),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-    
+        child: Text(
+          text,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+void showMessage(BuildContext context, String message) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(message),
+      backgroundColor: const Color(0xFF292318),
+    ),
+  );
+}
