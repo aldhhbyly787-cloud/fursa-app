@@ -12,19 +12,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Get source code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Flutter
+      - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
 
-      - name: Install dependencies      - name: Create Android project files
+      - name: Generate Android files
         run: flutter create . --platforms=android --org com.fursa.app
+
+      - name: Install dependencies
         run: flutter pub get
 
-      - name: Build Android APK
+      - name: Build APK
         run: flutter build apk --debug
 
       - name: Upload APK
