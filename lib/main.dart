@@ -33,6 +33,60 @@ class FursaApp extends StatelessWidget {
   }
 }
 
+class FursaLogo extends StatelessWidget {
+  const FursaLogo({super.key, this.size = 48});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: size * 1.7,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Transform.translate(
+            offset: const Offset(0, 5),
+            child: Text(
+              'فُرصة',
+              style: TextStyle(
+                fontSize: size,
+                fontWeight: FontWeight.w900,
+                color: const Color(0xFF805B0B),
+                shadows: const [
+                  Shadow(color: Colors.black, blurRadius: 8,
+                      offset: Offset(3, 5)),
+                ],
+              ),
+            ),
+          ),
+          Text(
+            'فُرصة',
+            style: TextStyle(
+              fontSize: size,
+              fontWeight: FontWeight.w900,
+              foreground: Paint()
+                ..shader = const LinearGradient(
+                  colors: [
+                    Color(0xFFFFF1A8),
+                    Color(0xFFD4AF37),
+                    Color(0xFFFFD966),
+                    Color(0xFF9C7418),
+                  ],
+                ).createShader(const Rect.fromLTWH(0, 0, 220, 80)),
+              shadows: const [
+                Shadow(color: Color(0xFFFFD700), blurRadius: 12),
+                Shadow(color: Colors.black, blurRadius: 4,
+                    offset: Offset(2, 3)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class Job {
   final String title;
   final String company;
@@ -57,18 +111,15 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int currentTab = 0;
+  int tab = 0;
   String accountType = '';
-  String searchText = '';
+  String search = '';
 
+  final name = TextEditingController();
+  final phone = TextEditingController();
+  final city = TextEditingController();
+  final profession = TextEditingController();
   final searchController = TextEditingController();
-  final nameController = TextEditingController();
-  final phoneController = TextEditingController();
-  final ageController = TextEditingController();
-  final cityController = TextEditingController();
-  final professionController = TextEditingController();
-  final experienceController = TextEditingController();
-  final companyController = TextEditingController();
 
   final List<Job> jobs = [
     const Job(
@@ -76,7 +127,14 @@ class _HomePageState extends State<HomePage> {
       company: 'شركة الإعمار',
       city: 'بغداد',
       salary: 'حسب الاتفاق',
-      details: 'مطلوب عامل بناء لديه خبرة في أعمال البناء.',
+      details: 'مطلوب عامل بناء للعمل ضمن فريق محترف.',
+    ),
+    const Job(
+      title: 'صباغ بيوت',
+      company: 'شركة الديكور',
+      city: 'بغداد',
+      salary: 'حسب الخبرة',
+      details: 'مطلوب صباغ لديه خبرة في صبغ المنازل.',
     ),
     const Job(
       title: 'سائق',
@@ -98,14 +156,11 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
+    name.dispose();
+    phone.dispose();
+    city.dispose();
+    profession.dispose();
     searchController.dispose();
-    nameController.dispose();
-    phoneController.dispose();
-    ageController.dispose();
-    cityController.dispose();
-    professionController.dispose();
-    experienceController.dispose();
-    companyController.dispose();
     super.dispose();
   }
 
@@ -115,26 +170,18 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  InputDecoration decoration(String label, IconData icon) {
+  InputDecoration fieldDecoration(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
       prefixIcon: Icon(icon, color: FursaApp.gold),
       filled: true,
       fillColor: const Color(0xFF202020),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
       ),
-    );
-  }
-
-  Widget field(String label, TextEditingController controller,
-      IconData icon, {TextInputType keyboard = TextInputType.text}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: TextField(
-        controller: controller,
-        keyboardType: keyboard,
-        decoration: decoration(label, icon),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Color(0xFF51421C)),
       ),
     );
   }
@@ -147,20 +194,43 @@ class _HomePageState extends State<HomePage> {
         style: ElevatedButton.styleFrom(
           backgroundColor: FursaApp.gold,
           foregroundColor: Colors.black,
-          padding: const EdgeInsets.all(15),
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
         ),
-        child: Text(title),
+        child: Text(
+          title,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget sectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      child: Text(
+        title,
+        style: const TextStyle(
+          color: FursaApp.gold,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }
 
   List<int> get filteredJobs {
-    return List.generate(jobs.length, (index) => index).where((index) {
-      final job = jobs[index];
-      final query = searchText.toLowerCase();
-      return job.title.toLowerCase().contains(query) ||
-          job.company.toLowerCase().contains(query) ||
-          job.city.toLowerCase().contains(query);
+    return List.generate(jobs.length, (i) => i).where((i) {
+      final j = jobs[i];
+      final q = search.toLowerCase();
+      return j.title.toLowerCase().contains(q) ||
+          j.company.toLowerCase().contains(q) ||
+          j.city.toLowerCase().contains(q);
     }).toList();
   }
 
@@ -168,25 +238,21 @@ class _HomePageState extends State<HomePage> {
     showModalBottomSheet(
       context: context,
       backgroundColor: const Color(0xFF202020),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(20),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(22),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'اختر نوع الحساب',
-              style: TextStyle(color: FursaApp.gold, fontSize: 21),
-            ),
-            const SizedBox(height: 18),
+            sectionTitle('اختر نوع الحساب'),
             goldButton('حساب عامل', () {
-              setState(() => accountType = 'عامل');
-              Navigator.pop(context);
+              Navigator.pop(ctx);
+              accountType = 'عامل';
               showProfileForm();
             }),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             goldButton('حساب صاحب عمل', () {
-              setState(() => accountType = 'صاحب عمل');
-              Navigator.pop(context);
+              Navigator.pop(ctx);
+              accountType = 'صاحب عمل';
               showProfileForm();
             }),
           ],
@@ -200,43 +266,51 @@ class _HomePageState extends State<HomePage> {
       context: context,
       isScrollControlled: true,
       backgroundColor: const Color(0xFF171717),
-      builder: (context) => Padding(
+      builder: (ctx) => Padding(
         padding: EdgeInsets.fromLTRB(
-          20, 25, 20,
-          MediaQuery.of(context).viewInsets.bottom + 25,
+          20, 24, 20,
+          MediaQuery.of(ctx).viewInsets.bottom + 24,
         ),
         child: SingleChildScrollView(
           child: Column(
             children: [
-              Text(
-                'إنشاء حساب $accountType',
-                style: const TextStyle(
-                  color: FursaApp.gold,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
+              const FursaLogo(size: 38),
+              sectionTitle('إنشاء حساب $accountType'),
+              TextField(
+                controller: name,
+                decoration: fieldDecoration('الاسم الكامل', Icons.person),
               ),
-              const SizedBox(height: 20),
-              field('الاسم الكامل', nameController, Icons.person),
-              field('رقم الهاتف', phoneController, Icons.phone,
-                  keyboard: TextInputType.phone),
-              field('العمر', ageController, Icons.calendar_today,
-                  keyboard: TextInputType.number),
-              field('المحافظة', cityController, Icons.location_on),
+              const SizedBox(height: 12),
+              TextField(
+                controller: phone,
+                keyboardType: TextInputType.phone,
+                decoration: fieldDecoration('رقم الهاتف', Icons.phone),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: city,
+                decoration: fieldDecoration('المحافظة', Icons.location_on),
+              ),
               if (accountType == 'عامل') ...[
-                field('المهنة أو الاختصاص', professionController, Icons.work),
-                field('سنوات الخبرة', experienceController, Icons.history),
-              ] else
-                field('اسم الشركة', companyController, Icons.business),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: profession,
+                  decoration: fieldDecoration(
+                    'المهنة أو الاختصاص',
+                    Icons.work,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 20),
               goldButton('حفظ البيانات', () {
-                if (nameController.text.trim().isEmpty ||
-                    phoneController.text.trim().isEmpty) {
+                if (name.text.trim().isEmpty ||
+                    phone.text.trim().isEmpty) {
                   message('يرجى إدخال الاسم ورقم الهاتف');
                   return;
                 }
-                Navigator.pop(context);
-                setState(() => currentTab = 3);
-                message('تم إدخال البيانات في هذه النسخة التجريبية');
+                Navigator.pop(ctx);
+                setState(() => tab = 3);
+                message('تم حفظ البيانات في هذه النسخة التجريبية');
               }),
             ],
           ),
@@ -245,53 +319,39 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget actionCard(IconData icon, String title, VoidCallback action) {
-    return Expanded(
-      child: InkWell(
-        onTap: action,
-        child: Card(
-          color: const Color(0xFF202020),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                Icon(icon, color: FursaApp.gold, size: 35),
-                const SizedBox(height: 10),
-                Text(title, textAlign: TextAlign.center),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget jobCard(int index) {
     final job = jobs[index];
+    final saved = favorites.contains(index);
+
     return Card(
       color: const Color(0xFF202020),
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 13),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: const BorderSide(color: Color(0xFF51421C)),
+      ),
       child: ListTile(
-        leading: const Icon(Icons.work, color: FursaApp.gold),
-        title: Text(job.title),
+        contentPadding: const EdgeInsets.all(12),
+        leading: const CircleAvatar(
+          backgroundColor: Color(0xFF3B3018),
+          child: Icon(Icons.work, color: FursaApp.gold),
+        ),
+        title: Text(
+          job.title,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         subtitle: Text(
-          '${job.company} • ${job.city}\n${job.salary}',
+          '${job.company}\n${job.city} • ${job.salary}',
         ),
         isThreeLine: true,
         trailing: IconButton(
           icon: Icon(
-            favorites.contains(index)
-                ? Icons.favorite
-                : Icons.favorite_border,
+            saved ? Icons.favorite : Icons.favorite_border,
             color: FursaApp.gold,
           ),
           onPressed: () {
             setState(() {
-              if (favorites.contains(index)) {
-                favorites.remove(index);
-              } else {
-                favorites.add(index);
-              }
+              saved ? favorites.remove(index) : favorites.add(index);
             });
           },
         ),
@@ -302,12 +362,15 @@ class _HomePageState extends State<HomePage> {
 
   void showJobDetails(int index) {
     final job = jobs[index];
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF202020),
-        title: Text(job.title,
-            style: const TextStyle(color: FursaApp.gold)),
+        title: Text(
+          job.title,
+          style: const TextStyle(color: FursaApp.gold),
+        ),
         content: Text(
           'الشركة: ${job.company}\n'
           'المحافظة: ${job.city}\n'
@@ -317,18 +380,17 @@ class _HomePageState extends State<HomePage> {
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(context);
-              if (accountType != 'عامل' ||
-                  nameController.text.trim().isEmpty) {
+              Navigator.pop(ctx);
+              if (accountType != 'عامل' || name.text.trim().isEmpty) {
                 message('يرجى إنشاء حساب عامل أولاً');
               } else {
-                message('التقديم التجريبي: لم يتم إرسال طلب حقيقي');
+                message('التقديم الحقيقي يحتاج ربط قاعدة البيانات');
               }
             },
             child: const Text('تقديم على الوظيفة'),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(ctx),
             child: const Text('إغلاق'),
           ),
         ],
@@ -341,132 +403,123 @@ class _HomePageState extends State<HomePage> {
       padding: const EdgeInsets.all(18),
       children: [
         const SizedBox(height: 12),
-        const Text(
-          'فُرصة للعمل والتوظيف',
-          style: TextStyle(
-            color: FursaApp.gold,
-            fontSize: 25,
-            fontWeight: FontWeight.bold,
+        const Center(child: FursaLogo(size: 65)),
+        const Center(
+          child: Text(
+            'منصتك للعمل والتوظيف',
+            style: TextStyle(color: Colors.white70, fontSize: 16),
           ),
         ),
-        const SizedBox(height: 8),
-        const Text('فرصتك للعمل تبدأ من هنا'),
-        const SizedBox(height: 20),
+        const SizedBox(height: 24),
         TextField(
           controller: searchController,
-          onChanged: (value) => setState(() => searchText = value),
-          decoration: decoration('ابحث عن وظيفة أو مهنة', Icons.search),
-        ),
-        const SizedBox(height: 20),
-        const Text(
-          'ماذا تريد أن تفعل؟',
-          style: TextStyle(
-            color: FursaApp.gold,
-            fontSize: 19,
-            fontWeight: FontWeight.bold,
+          onChanged: (v) => setState(() => search = v),
+          decoration: fieldDecoration(
+            'ابحث عن وظيفة أو مهنة',
+            Icons.search,
           ),
         ),
-        const SizedBox(height: 12),
+        sectionTitle('ماذا تريد أن تفعل؟'),
         Row(
           children: [
-            actionCard(Icons.work_outline, 'البحث عن عمل',
-                () => setState(() => currentTab = 1)),
-            actionCard(Icons.people_outline, 'البحث عن عمال',
-                () => message('البحث عن العمال قيد التطوير')),
+            Expanded(
+              child: actionCard(
+                Icons.work_outline,
+                'البحث عن عمل',
+                () => setState(() => tab = 1),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: actionCard(
+                Icons.people_outline,
+                'البحث عن عمال',
+                () => message('قسم البحث عن العمال قيد التطوير'),
+              ),
+            ),
           ],
         ),
-        const SizedBox(height: 15),
+        const SizedBox(height: 18),
         goldButton('إنشاء حساب جديد', chooseAccount),
-        const SizedBox(height: 20),
-        const Text(
-          'أحدث الوظائف',
-          style: TextStyle(
-            color: FursaApp.gold,
-            fontSize: 19,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 10),
-        ...filteredJobs.map((index) => jobCard(index)),
+        sectionTitle('أحدث الوظائف'),
+        ...filteredJobs.map((i) => jobCard(i)),
       ],
     );
   }
 
-  Widget buildJobsPage() {
+  Widget actionCard(IconData icon, String title, VoidCallback action) {
+    return InkWell(
+      onTap: action,
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 23, horizontal: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xFF202020),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFF51421C)),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black54,
+              blurRadius: 8,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: FursaApp.gold, size: 36),
+            const SizedBox(height: 10),
+            Text(title, textAlign: TextAlign.center),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget buildJobs() {
     return ListView(
       padding: const EdgeInsets.all(18),
       children: [
-        const Text(
-          'الوظائف المتاحة',
-          style: TextStyle(
-            color: FursaApp.gold,
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 15),
+        sectionTitle('الوظائف المتاحة'),
         TextField(
           controller: searchController,
-          onChanged: (value) => setState(() => searchText = value),
-          decoration: decoration('ابحث عن وظيفة', Icons.search),
+          onChanged: (v) => setState(() => search = v),
+          decoration: fieldDecoration('ابحث عن وظيفة', Icons.search),
         ),
-        const SizedBox(height: 15),
-        ...filteredJobs.map((index) => jobCard(index)),
+        const SizedBox(height: 16),
+        ...filteredJobs.map((i) => jobCard(i)),
         if (filteredJobs.isEmpty)
           const Center(child: Text('لا توجد وظائف مطابقة')),
       ],
     );
   }
 
-  Widget buildFavoritesPage() {
+  Widget buildFavorites() {
     return ListView(
       padding: const EdgeInsets.all(18),
       children: [
-        const Text(
-          'الوظائف المحفوظة',
-          style: TextStyle(
-            color: FursaApp.gold,
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 15),
-        ...favorites.map((index) => jobCard(index)),
+        sectionTitle('الوظائف المحفوظة'),
+        ...favorites.map((i) => jobCard(i)),
         if (favorites.isEmpty)
           const Center(child: Text('لم تحفظ أي وظيفة بعد')),
       ],
     );
   }
 
-  Widget buildAccountPage() {
+  Widget buildAccount() {
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        const Icon(Icons.account_circle,
-            size: 85, color: FursaApp.gold),
-        const SizedBox(height: 15),
-        const Center(
-          child: Text(
-            'حسابي',
-            style: TextStyle(
-              color: FursaApp.gold,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        const SizedBox(height: 25),
+        const SizedBox(height: 20),
+        const Center(child: FursaLogo(size: 55)),
+        sectionTitle('حسابي'),
         ListTile(
           leading: const Icon(Icons.person, color: FursaApp.gold),
-          title: Text(nameController.text.isEmpty
-              ? 'الاسم: لم يتم التسجيل'
-              : nameController.text),
+          title: Text(name.text.isEmpty ? 'لم يتم التسجيل' : name.text),
         ),
         ListTile(
           leading: const Icon(Icons.phone, color: FursaApp.gold),
-          title: Text(phoneController.text.isEmpty
-              ? 'رقم الهاتف: غير مسجل'
-              : phoneController.text),
+          title: Text(phone.text.isEmpty ? 'رقم الهاتف غير مسجل' : phone.text),
         ),
         ListTile(
           leading: const Icon(Icons.work, color: FursaApp.gold),
@@ -474,23 +527,23 @@ class _HomePageState extends State<HomePage> {
         ),
         ListTile(
           leading: const Icon(Icons.location_on, color: FursaApp.gold),
-          title: Text('المحافظة: ${cityController.text}'),
+          title: Text('المحافظة: ${city.text}'),
         ),
-        const Divider(),
-        ListTile(
-          leading: const Icon(Icons.star, color: FursaApp.gold),
-          title: const Text('التقييمات'),
-          onTap: () => message('نظام التقييمات قيد التطوير'),
-        ),
+        const Divider(color: FursaApp.gold),
         ListTile(
           leading: const Icon(Icons.verified_user, color: FursaApp.gold),
           title: const Text('توثيق الهوية'),
-          onTap: () => message('توثيق الهوية قيد التطوير'),
+          onTap: () => message('التوثيق يحتاج ربط قاعدة البيانات'),
+        ),
+        ListTile(
+          leading: const Icon(Icons.star, color: FursaApp.gold),
+          title: const Text('التقييمات'),
+          onTap: () => message('التقييمات قيد التطوير'),
         ),
         ListTile(
           leading: const Icon(Icons.info_outline, color: FursaApp.gold),
           title: const Text('عن منصة فُرصة'),
-          onTap: () => message('منصة عراقية للتوظيف'),
+          onTap: () => message('فُرصة منصة عراقية للعمل والتوظيف'),
         ),
       ],
     );
@@ -498,37 +551,35 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final pages = [
+      buildHome(),
+      buildJobs(),
+      buildFavorites(),
+      buildAccount(),
+    ];
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: FursaApp.black,
         centerTitle: true,
-        title: const Text(
-          'فُرصة',
-          style: TextStyle(
-            color: FursaApp.gold,
-            fontSize: 26,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        title: const FursaLogo(size: 27),
         actions: [
           IconButton(
             onPressed: () => message('لا توجد إشعارات حالياً'),
-            icon: const Icon(Icons.notifications_none),
+            icon: const Icon(
+              Icons.notifications_none,
+              color: FursaApp.gold,
+            ),
           ),
         ],
       ),
       body: IndexedStack(
-        index: currentTab,
-        children: [
-          buildHome(),
-          buildJobsPage(),
-          buildFavoritesPage(),
-          buildAccountPage(),
-        ],
+        index: tab,
+        children: pages,
       ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: currentTab,
-        onTap: (index) => setState(() => currentTab = index),
+        currentIndex: tab,
+        onTap: (i) => setState(() => tab = i),
         backgroundColor: const Color(0xFF202020),
         selectedItemColor: FursaApp.gold,
         unselectedItemColor: Colors.white60,
